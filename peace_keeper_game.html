@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Peace Keeper Game</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            background-color: #0f4c81;
+        }
+        #game-container {
+            text-align: center;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 0 15px rgba(0, 0, 0, 0.2);
+            max-width: 700px;
+            width: 100%;
+            background-color: white;
+        }
+        #card {
+            background-color: #fff;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 6px 10px rgba(0, 0, 0, 0.15);
+            border: 3px solid #d96528;
+            margin-bottom: 20px;
+        }
+        #conflict-card {
+            text-align: left;
+            padding: 15px;
+            font-size: 1.2em;
+            color: #d96528;
+        }
+        #options {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+        button {
+            padding: 12px 20px;
+            font-size: 16px;
+            cursor: pointer;
+            border: 2px solid #d96528;
+            background-color: #77b3d4;
+            border-radius: 8px;
+            transition: background-color 0.3s ease;
+        }
+        button:hover {
+            background-color: #d96528;
+            color: white;
+        }
+        #score, #attempts {
+            font-size: 20px;
+            font-weight: bold;
+            margin-bottom: 10px;
+            color: #333;
+        }
+        #feedback {
+            margin-top: 10px;
+            font-weight: bold;
+            color: green;
+        }
+    </style>
+</head>
+<body>
+    <div id="game-container">
+        <h1 style="color:#0f4c81;">Peace Keeper Game</h1>
+        <div id="card">
+            <div id="conflict-card">
+                <h2 style="color:#d96528;">Conflict Scenario</h2>
+                <p id="scenario"></p>
+            </div>
+        </div>
+        <div id="options"></div>
+        <div id="score">Score: <span id="score-value">0</span></div>
+        <div id="attempts">Attempts left: <span id="attempts-value">3</span></div>
+        <div id="feedback"></div>
+    </div>
+
+    <script>
+        const scenarios = [
+            {scenario: "A senior developer is juggling multiple projects, causing delays.", correctAnswer: "Meet with the developer, redistribute tasks, and set priorities.", options: ["Meet with the developer, redistribute tasks, and set priorities.", "Ignore the issue and hope it resolves itself.", "Escalate the issue immediately to senior management."]},
+            {scenario: "The client asks for more features without adjusting the budget or timeline.", correctAnswer: "Discuss scope, outline costs, and negotiate changes.", options: ["Discuss scope, outline costs, and negotiate changes.", "Ignore the issue and hope it resolves itself.", "Escalate the issue immediately to senior management."]},
+            {scenario: "A key stakeholder is disengaged, delaying feedback and project progression.", correctAnswer: "Clarify expectations, engage in regular check-ins, and align goals.", options: ["Clarify expectations, engage in regular check-ins, and align goals.", "Ignore the issue and hope it resolves itself.", "Escalate the issue immediately to senior management."]},
+            {scenario: "Finance reduces the project budget by 15%, leaving the team unsure how to proceed.", correctAnswer: "Organize a team brainstorm to reallocate resources and adjust scope.", options: ["Organize a team brainstorm to reallocate resources and adjust scope.", "Ignore the issue and hope it resolves itself.", "Escalate the issue immediately to senior management."]},
+            {scenario: "A team member is consistently distracted, missing deadlines, and affecting the team’s morale.", correctAnswer: "Meet privately to understand the problem, mediate with the team, and set measurable goals.", options: ["Meet privately to understand the problem, mediate with the team, and set measurable goals.", "Ignore the issue and hope it resolves itself.", "Escalate the issue immediately to senior management."]},
+            {scenario: "A new stakeholder joins late and demands changes to the scope.", correctAnswer: "Hold a meeting to clarify expectations and explain constraints.", options: ["Hold a meeting to clarify expectations and explain constraints.", "Ignore the stakeholder's requests.", "Escalate the issue immediately to senior management."]},
+            {scenario: "A key resource leaves the team unexpectedly, causing delays.", correctAnswer: "Reassess the project timeline and redistribute tasks to available team members.", options: ["Reassess the project timeline and redistribute tasks to available team members.", "Do nothing and hope things work out.", "Escalate the issue immediately to senior management."]},
+            {scenario: "The team is overworked, leading to missed deadlines and poor-quality deliverables.", correctAnswer: "Schedule a team meeting to discuss workload, redistribute tasks, and set realistic deadlines.", options: ["Schedule a team meeting to discuss workload, redistribute tasks, and set realistic deadlines.", "Push the team harder to meet deadlines.", "Ignore the issue and continue as is."]},
+            {scenario: "A team member is openly critical of another in team meetings, creating tension.", correctAnswer: "Meet with both parties to mediate and address the underlying conflict.", options: ["Meet with both parties to mediate and address the underlying conflict.", "Ignore the conflict and hope it resolves itself.", "Escalate the issue to HR immediately."]},
+            {scenario: "A client is unhappy with the current progress and threatens to cancel the project.", correctAnswer: "Arrange an urgent meeting with the client to understand their concerns and propose a recovery plan.", options: ["Arrange an urgent meeting with the client to understand their concerns and propose a recovery plan.", "Push ahead with the project and ignore the client's threats.", "Escalate the issue to senior management."]},
+            {scenario: "A senior team member refuses to follow the project’s new processes.", correctAnswer: "Meet with the team member to discuss the importance of the new processes and address their concerns.", options: ["Meet with the team member to discuss the importance of the new processes and address their concerns.", "Ignore their refusal and continue.", "Escalate the issue to senior management."]},
+            {scenario: "Stakeholders are requesting conflicting changes to the project scope.", correctAnswer: "Facilitate a meeting to align stakeholder expectations and prioritize changes.", options: ["Facilitate a meeting to align stakeholder expectations and prioritize changes.", "Ignore the conflicts and push ahead.", "Escalate the issue to senior management."]},
+            {scenario: "The project sponsor is disengaged and slow to provide necessary approvals.", correctAnswer: "Meet with the sponsor to clarify expectations and agree on a more efficient approval process.", options: ["Meet with the sponsor to clarify expectations and agree on a more efficient approval process.", "Continue without seeking approvals.", "Escalate the issue to senior management."]},
+            {scenario: "A team member is struggling with their workload but won't ask for help.", correctAnswer: "Meet with the team member to discuss their workload and offer support or reassign tasks.", options: ["Meet with the team member to discuss their workload and offer support or reassign tasks.", "Ignore the issue and wait for them to ask for help.", "Escalate the issue to senior management."]},
+            {scenario: "Project deliverables are delayed due to reliance on a third-party vendor.", correctAnswer: "Work with the vendor to set clearer deadlines and escalate within the vendor's organization if necessary.", options: ["Work with the vendor to set clearer deadlines and escalate within the vendor's organization if necessary.", "Ignore the delays and hope they improve.", "Escalate the issue to senior management."]},
+            {scenario: "A key team member is frequently unavailable due to personal issues.", correctAnswer: "Meet with the team member to understand their availability and adjust the project plan accordingly.", options: ["Meet with the team member to understand their availability and adjust the project plan accordingly.", "Ignore the issue and hope it resolves itself.", "Escalate the issue to senior management."]},
+            {scenario: "The project budget is nearly depleted, but critical tasks remain unfinished.", correctAnswer: "Meet with stakeholders to re-prioritize remaining tasks and request additional funding if necessary.", options: ["Meet with stakeholders to re-prioritize remaining tasks and request additional funding if necessary.", "Continue working without addressing the budget issue.", "Escalate the issue to senior management."]},
+            {scenario: "Team members are unclear about their roles, leading to confusion and delays.", correctAnswer: "Hold a meeting to clarify roles, responsibilities, and expectations.", options: ["Hold a meeting to clarify roles, responsibilities, and expectations.", "Ignore the confusion and hope it resolves itself.", "Escalate the issue to senior management."]}
+        ];
+
+        let currentScenario = 0;
+        let score = 0;
+        let attemptsLeft = 3;
+
+        function loadScenario() {
+            const scenario = scenarios[currentScenario];
+            document.getElementById('scenario').textContent = scenario.scenario;
+            const optionsContainer = document.getElementById('options');
+            optionsContainer.innerHTML = '';
+            scenario.options.forEach(option => {
+                const button = document.createElement('button');
+                button.textContent = option;
+                button.onclick = () => checkAnswer(option, scenario.correctAnswer);
+                optionsContainer.appendChild(button);
+            });
+            document.getElementById('feedback').textContent = '';
+        }
+
+        function checkAnswer(selectedOption, correctAnswer) {
+            const feedbackElement = document.getElementById('feedback');
+            if (selectedOption === correctAnswer) {
+                score++;
+                document.getElementById('score-value').textContent = score;
+                feedbackElement.textContent = "Correct! Well done.";
+                feedbackElement.style.color = "green";
+                nextScenario();
+            } else {
+                attemptsLeft--;
+                document.getElementById('attempts-value').textContent = attemptsLeft;
+                feedbackElement.textContent = "Incorrect. Try again.";
+                feedbackElement.style.color = "red";
+                if (attemptsLeft === 0) {
+                    feedbackElement.textContent = `Game Over! Your final score is ${score}`;
+                    setTimeout(() => resetGame(), 3000);
+                }
+            }
+        }
+
+        function nextScenario() {
+            currentScenario++;
+            if (currentScenario < scenarios.length) {
+                setTimeout(loadScenario, 1000);
+            } else {
+                document.getElementById('feedback').textContent = `Congratulations! You've completed all scenarios. Your final score is ${score}`;
+                setTimeout(() => resetGame(), 3000);
+            }
+        }
+
+        function resetGame() {
+            currentScenario = 0;
+            score = 0;
+            attemptsLeft = 3;
+            document.getElementById('score-value').textContent = score;
+            document.getElementById('attempts-value').textContent = attemptsLeft;
+            loadScenario();
+        }
+
+        loadScenario();
+    </script>
+</body>
+</html>
